@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  proxy:
+    build: 
+      context: ./docker/proxy
+    ports:
+      - "8080:8080"
+    networks:
+      - browshell
+
+  browser:
+    build:
+      context: ./docker/browser
+    environment:
+      - PLUGIN_ENABLED=true
+      - SHELL_ACCESS=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - browshell
+
+networks:
+  browshell:
+    driver: bridge
