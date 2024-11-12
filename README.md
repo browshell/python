@@ -349,3 +349,180 @@ graph LR
     E --> F[Analysis]
     F --> G[Output/Export]
 ```
+
+
+
+
+# Browshell CLI + Docker + Browser Architecture
+
+## System Components
+
+```mermaid
+graph TD
+    A[Terminal CLI] -->|Docker Command| B[Docker Container]
+    B -->|Expose HTTP| C[Browser Interface]
+    B -->|Create| D[Virtual Browser Container]
+    D -->|Plugin| E[Shell Executor]
+    E -->|Execute| F[Command Runner]
+    C -->|WebSocket| B
+    D -->|WebSocket| B
+```
+
+## Implementation Structure
+
+
+Ta konfiguracja zawiera:
+
+1. **Proxy Server**:
+- Nginx jako reverse proxy
+- WebSocket support
+- Routing do przeglądarki
+
+2. **Browser Container**:
+- Chrome w trybie headless
+- Plugin do wykrywania komend
+- WebSocket server
+- Express server
+
+3. **Plugin**:
+- Wykrywanie komend w tekście
+- WebSocket komunikacja
+- Background worker
+
+Aby uruchomić system:
+
+```bash
+# Zbuduj obrazy
+docker-compose build
+
+# Uruchom system
+docker-compose up -d
+
+# Sprawdź logi
+docker-compose logs -f
+```
+
+Główne funkcje:
+1. Automatyczne wykrywanie komend
+2. Bezpieczne wykonywanie w kontenerze
+3. Real-time wyniki przez WebSocket
+4. Izolowane środowisko wykonawcze
+
+```bash
+browshell/
+├── cli/                          # Terminal Command Line Interface
+│   ├── src/
+│   │   ├── commands/            # CLI commands
+│   │   │   ├── init.ts         # Initialize environment
+│   │   │   ├── start.ts        # Start containers
+│   │   │   └── stop.ts         # Stop environment
+│   │   └── docker/             # Docker management
+│   └── package.json
+│
+├── docker/                       # Docker configurations
+│   ├── browser/                 # Virtual browser container
+│   │   ├── Dockerfile
+│   │   └── plugin/             # Browser shell plugin
+│   │       ├── manifest.json
+│   │       └── shell-exec.js
+│   │
+│   ├── proxy/                   # HTTP/WS proxy
+│   │   └── Dockerfile
+│   │
+│   └── docker-compose.yml
+│
+└── shared/                      # Shared utilities
+    └── types/
+```
+
+## Usage Flow
+
+1. **CLI Initialization**
+```bash
+# Install CLI globally
+npm install -g browshell-cli
+
+# Start browshell
+browshell start
+
+# CLI outputs
+[Browshell] Starting containers...
+[Browshell] Virtual browser ready
+[Browshell] Access your session at: http://localhost:8080
+```
+
+## Key Features
+
+1. **CLI Control**
+- Global installation
+- Docker management
+- Session control
+- Port management
+
+2. **Docker Integration**
+- Isolated environments
+- Resource management
+- Network control
+- Volume mounting
+
+3. **Browser Plugin**
+- Command extraction
+- Safe execution
+- Real-time feedback
+- Content monitoring
+
+4. **Security**
+- Sandboxed execution
+- Command validation
+- Resource limits
+- Network isolation
+
+## Configuration Example
+
+```bash
+# ~/.browshellrc
+{
+  "docker": {
+    "defaultNetwork": "browshell",
+    "containerPrefix": "browshell_",
+    "resources": {
+      "memory": "512m",
+      "cpu": "0.5"
+    }
+  },
+  "browser": {
+    "defaultPort": 8080,
+    "plugin": {
+      "allowedDomains": ["*"],
+      "commandTimeout": 30000
+    }
+  },
+  "security": {
+    "allowedCommands": [
+      "git",
+      "npm",
+      "node",
+      "python"
+    ]
+  }
+}
+```
+
+## Example Session
+
+```bash
+# Start browshell
+$ browshell start
+[Browshell] Creating docker network...
+[Browshell] Starting proxy container...
+[Browshell] Starting browser container...
+[Browshell] Plugin enabled...
+[Browshell] Ready at http://localhost:8080
+
+# Access in browser
+-> Navigate to http://localhost:8080
+-> Plugin automatically detects shell commands
+-> Commands are executed in isolated container
+-> Results displayed in browser
+```
+
