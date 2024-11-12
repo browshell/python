@@ -1,0 +1,36 @@
+services:
+  virtual-browser:
+    build:
+      context: ./browser
+      dockerfile: Dockerfile
+    ports:
+      - "6080:80"  # noVNC port
+      - "5900:5900"  # VNC port
+      - "4444:4444"  # Selenium port
+    environment:
+      - VNC_RESOLUTION=1920x1080
+      - VNC_PASSWORD=browsershell
+      - SHELL_API_URL=http://shell-api:8000
+    volumes:
+      - ./browser/extensions:/usr/share/extensions
+      - ./browser/downloads:/home/chrome/Downloads
+    networks:
+      - browser-net
+
+  shell-api:
+    build:
+      context: ./shell-api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - MAX_EXECUTION_TIME=30
+    networks:
+      - browser-net
+
+networks:
+  browser-net:
+    driver: bridge
